@@ -180,7 +180,7 @@ module CheckGluster
     def volume_status(volume, bricks, checks)
       nodes = gluster("volume status #{volume}")['volStatus']['volumes']['volume']['node']
       nodes = any_to_array(nodes)
-      nodes.each { |node| node['path'] = Socket.gethostbyname(Socket.gethostname).first if node['path'] == 'localhost' }
+      nodes.each { |node| node['path'] = gethostname if node['path'] == 'localhost' }
       # Check that all bricks are running
       bricks.each do |brick|
         raise "volume #{brick[0]}:#{brick[1]} is not running" unless check_running(nodes, brick[0], brick[1])
@@ -296,7 +296,7 @@ module CheckGluster
     # rubocop:enable Metrics/CyclomaticComplexity
 
     def parse_bitrot_status(info)
-      info.map! { |s| s.gsub(/localhost/, Socket.gethostname) }
+      info.map! { |s| s.gsub(/localhost/, gethostname) }
       status = { 'state' => false, 'nodes' => {} }
       node = ''
       info.each do |line|
@@ -315,6 +315,10 @@ module CheckGluster
     def any_to_array(any)
       return [any] if any.class.to_s != 'Array'
       any
+    end
+
+    def gethostname()
+      Socket.gethostname.split('.').first
     end
 
     private :get_services_from_checks, :gluster, :any_to_array
